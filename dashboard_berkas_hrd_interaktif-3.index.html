@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Berkas HRD - Klinik Greencare Homecare</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins & Lato -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Lato', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-height-screen font-sans flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <img src="image_aff69f.png" alt="Logo Klinik Greencare" class="h-11 w-11 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/44x44/10b981/ffffff?text=CGH'">
+                    <div>
+                        <h1 class="font-display font-bold text-xl text-slate-800 leading-tight">Klinik Greencare Homecare</h1>
+                        <p class="text-xs text-slate-500">Sistem Pintasan Menu Interaktif & Manajemen Dokumen HRD</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Live Time Counter -->
+                    <span id="live-clock" class="text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full hidden md:inline-block">
+                        <i class="fa-regular fa-clock mr-1"></i> Senin, 15 Jun 2026
+                    </span>
+                    <!-- Edit Mode Button -->
+                    <button onclick="toggleEditMode()" id="btn-edit-mode" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+                        <i id="edit-mode-icon" class="fa-solid fa-pen-to-square"></i>
+                        <span id="edit-mode-text">Aktifkan Mode Edit</span>
+                    </button>
+                    <!-- Export Button (Visible only in edit mode) -->
+                    <button onclick="exportDashboard()" id="btn-export" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Simpan Hasil ke File</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        
+        <!-- Welcome banner & Search Bar -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-6 sm:p-8 text-white shadow-md mb-8 relative overflow-hidden">
+            <div class="absolute right-0 bottom-0 translate-y-12 translate-x-12 opacity-10">
+                <i class="fa-solid fa-users text-[200px]"></i>
+            </div>
+            <div class="relative z-10 max-w-3xl">
+                <span class="bg-emerald-500/30 text-emerald-100 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-400/20">Portal HRD Klinik Greencare Homecare</span>
+                <h2 class="font-display font-bold text-2xl sm:text-3xl mt-2 mb-6">Selamat Datang di Hub Manajemen HRD</h2>
+                
+                <!-- Advanced Search Filter -->
+                <div class="relative max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input type="text" id="search-input" onkeyup="filterDocs()" placeholder="Ketik nama berkas / form yang dicari..." class="block w-full pl-10 pr-4 py-3 border-0 rounded-xl bg-white text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-emerald-400 shadow-sm transition text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Shortcuts (Tab Bar) -->
+        <div class="flex space-x-2 pb-3 mb-6 overflow-x-auto custom-scrollbar">
+            <button onclick="filterCategory('All')" class="category-tab active px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium transition whitespace-nowrap shadow-sm" data-category="All">
+                Semua Berkas (<span id="count-all">0</span>)
+            </button>
+            <button onclick="filterCategory('Administrasi')" class="category-tab px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium border border-slate-200 transition whitespace-nowrap" data-category="Administrasi">
+                Administrasi & Data (<span id="count-admin">0</span>)
+            </button>
+            <button onclick="filterCategory('Operasional')" class="category-tab px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium border border-slate-200 transition whitespace-nowrap" data-category="Operasional">
+                Operasional Harian (<span id="count-op">0</span>)
+            </button>
+            <button onclick="filterCategory('Rekrutmen')" class="category-tab px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium border border-slate-200 transition whitespace-nowrap" data-category="Rekrutmen">
+                Rekrutmen & Onboarding (<span id="count-rekrut">0</span>)
+            </button>
+            <button onclick="filterCategory('Evaluasi')" class="category-tab px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium border border-slate-200 transition whitespace-nowrap" data-category="Evaluasi">
+                Evaluasi & Pelatihan (<span id="count-eval">0</span>)
+            </button>
+        </div>
+
+        <!-- Dynamic Grid View (The buttons) -->
+        <div id="dashboard-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Cards will be populated here dynamically via JS -->
+        </div>
+
+        <!-- Action Section in Edit Mode -->
+        <div id="add-item-container" class="hidden mt-8 p-6 bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl text-center">
+            <p class="text-sm text-slate-500 mb-3">Ingin menambah tautan atau formulir baru ke dalam sistem menu?</p>
+            <button onclick="openAddModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm px-4 py-2 rounded-lg transition inline-flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Tambah Berkas Baru
+            </button>
+        </div>
+    </main>
+
+    <!-- App Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-400">
+            <p>© 2026 HRD Klinik Greencare Homecare. Dioptimalkan untuk efisiensi akses berkas operasional.</p>
+            <p class="mt-1 text-emerald-500"><i class="fa-solid fa-circle-check"></i> Seluruh pintasan terverifikasi aktif.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL: ADD / EDIT DIALOG -->
+    <div id="item-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl animate-in fade-in duration-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="font-display font-bold text-lg text-slate-800">Edit Berkas</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="item-form" onsubmit="saveItem(event)" class="space-y-4">
+                <input type="hidden" id="form-item-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Nama Berkas / Form</label>
+                    <input type="text" id="form-item-name" required placeholder="Contoh: Form Pengajuan Izin" class="block w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Kategori Kelompok</label>
+                    <select id="form-item-category" class="block w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800">
+                        <option value="Administrasi">Administrasi & Data</option>
+                        <option value="Operasional">Operasional Harian</option>
+                        <option value="Rekrutmen">Rekrutmen & Onboarding</option>
+                        <option value="Evaluasi">Evaluasi & Pelatihan</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Ikon (FontAwesome)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="form-item-icon" required placeholder="fa-file-signature" class="block w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 font-mono">
+                        <div id="icon-preview" class="w-10 h-10 border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 bg-slate-50">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1">Gunakan kode ikon seperti: fa-file, fa-brain, fa-database, fa-users</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Tautan Link Berkas (URL)</label>
+                    <input type="url" id="form-item-link" required placeholder="https://forms.gle/... atau https://bit.ly/..." class="block w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-semibold transition">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-semibold transition">Simpan Berkas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 1. Initial Default Data mapped directly from your Screenshots
+        const defaultDocs = [
+            // Kategori: Administrasi
+            { id: 1, category: "Administrasi", name: "Psikotes HO", link: "https://bit.ly/psikotestighc", icon: "fa-brain" },
+            { id: 2, category: "Administrasi", name: "Data Based Petugas", link: "https://bit.ly/datakaryawanhcgc", icon: "fa-database" },
+            { id: 3, category: "Administrasi", name: "Sistem Kerja HRD", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-network-wired" },
+            { id: 4, category: "Administrasi", name: "Peraturan Perusahaan", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-book" },
+            { id: 5, category: "Administrasi", name: "Data Karyawan", link: "https://bit.ly/datakaryawanhcgc", icon: "fa-address-card" },
+            { id: 6, category: "Administrasi", name: "Job Description Posisi", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-user-tag" },
+            { id: 7, category: "Administrasi", name: "Status Kepegawaian", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-id-badge" },
+            { id: 8, category: "Administrasi", name: "Berita Acara", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-file-signature" },
+
+            // Kategori: Operasional
+            { id: 9, category: "Operasional", name: "Form Pengajuan Izin", link: "https://bit.ly/formpengajuanizinHC", icon: "fa-calendar-minus" },
+            { id: 10, category: "Operasional", name: "Form Laporan Pelanggaran", link: "https://forms.gle/eySFa7GfJ1MsbJeS8", icon: "fa-gavel" },
+            { id: 11, category: "Operasional", name: "Form Serah Terima Pekerjaan", link: "https://forms.gle/B25S5ndbPHVDJY267", icon: "fa-people-arrows" },
+            { id: 12, category: "Operasional", name: "Form Permintaan Karyawan Baru", link: "https://forms.gle/RS5qCW3FBEDEeN2XA", icon: "fa-user-plus" },
+            { id: 13, category: "Operasional", name: "Form Pengajuan Mutasi", link: "https://forms.gle/6NeD9Ao4JHyARLkk6", icon: "fa-exchange-alt" },
+
+            // Kategori: Rekrutmen & Onboarding
+            { id: 14, category: "Rekrutmen", name: "Form Penilaian Orientasi", link: "https://bit.ly/formpenilaianorientasipetugasHC", icon: "fa-route" },
+            { id: 15, category: "Rekrutmen", name: "Dashboard Orientasi", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-chart-pie" },
+            { id: 16, category: "Rekrutmen", name: "Rekrutmen Tracker", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-tasks" },
+            { id: 17, category: "Rekrutmen", name: "Form Jadwal Recruitment", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-calendar-alt" },
+
+            // Kategori: Evaluasi & Pelatihan
+            { id: 18, category: "Evaluasi", name: "Surat Peringatan", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-triangle-exclamation" },
+            { id: 19, category: "Evaluasi", name: "Surat Teguran", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-envelope-open-text" },
+            { id: 20, category: "Evaluasi", name: "Form Exit Interview", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-door-open" },
+            { id: 21, category: "Evaluasi", name: "SOP Kerja Berkas", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-info-circle" },
+            { id: 22, category: "Evaluasi", name: "Form Penilaian Probation", link: "https://forms.gle/1aHRxYF2sRXFfXEw8", icon: "fa-user-clock" },
+            { id: 23, category: "Evaluasi", name: "Surat Keterangan Kerja", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-file-contract" },
+            { id: 24, category: "Evaluasi", name: "Form Kebutuhan Training", link: "https://forms.gle/Bo2ka3SfNQzqAykK7", icon: "fa-graduation-cap" },
+            { id: 25, category: "Evaluasi", name: "Form Evaluasi Training", link: "https://forms.gle/RFdaw5nkYKF3Uk7cA", icon: "fa-clipboard-check" },
+            { id: 26, category: "Evaluasi", name: "Evaluasi Efektivitas Training", link: "https://forms.gle/eHyaj32oN63qARRc6", icon: "fa-chart-line" },
+            { id: 27, category: "Evaluasi", name: "KPI Management", link: "https://docs.google.com/spreadsheets/d/1nyrtbnWV_NQZJYGkT1lf-CRcKTH5D9taGbHMVFNoZuw/edit?usp=sharing", icon: "fa-star" },
+            { id: 28, category: "Evaluasi", name: "Penilaian Kompetensi", link: "https://forms.gle/6fCWUbXQEnSr8Zu56", icon: "fa-award" },
+            { id: 29, category: "Evaluasi", name: "Survey Kepuasan Karyawan", link: "https://forms.gle/mXoLsgPwMZBxZhQ4A", icon: "fa-face-laugh-beam" }
+        ];
+
+        let docs = [];
+        let editMode = false;
+        let selectedCategory = 'All';
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            // Read from local storage or set default docs
+            const savedDocs = localStorage.getItem('hrd_docs');
+            if (savedDocs) {
+                docs = JSON.parse(savedDocs);
+            } else {
+                docs = [...defaultDocs];
+                localStorage.setItem('hrd_docs', JSON.stringify(docs));
+            }
+
+            // Real-time icon preview inside the modal
+            document.getElementById('form-item-icon').addEventListener('input', (e) => {
+                const previewEl = document.getElementById('icon-preview');
+                previewEl.innerHTML = `<i class="fa-solid ${e.target.value || 'fa-file'}"></i>`;
+            });
+
+            // Set Live Counter Date
+            const clockEl = document.getElementById('live-clock');
+            const now = new Date();
+            const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+            clockEl.innerHTML = `<i class="fa-regular fa-clock mr-1.5"></i> ${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+            renderDashboard();
+            updateTabCounts();
+        });
+
+        // Update counts next to category names
+        function updateTabCounts() {
+            document.getElementById('count-all').innerText = docs.length;
+            document.getElementById('count-admin').innerText = docs.filter(d => d.category === 'Administrasi').length;
+            document.getElementById('count-op').innerText = docs.filter(d => d.category === 'Operasional').length;
+            document.getElementById('count-rekrut').innerText = docs.filter(d => d.category === 'Rekrutmen').length;
+            document.getElementById('count-eval').innerText = docs.filter(d => d.category === 'Evaluasi').length;
+        }
+
+        // Render Dashboard Cards
+        function renderDashboard() {
+            const gridEl = document.getElementById('dashboard-grid');
+            gridEl.innerHTML = '';
+
+            const filtered = docs.filter(doc => {
+                // Category match
+                const catMatch = selectedCategory === 'All' || doc.category === selectedCategory;
+                // Query match
+                const query = document.getElementById('search-input').value.toLowerCase();
+                const textMatch = doc.name.toLowerCase().includes(query) || doc.category.toLowerCase().includes(query);
+                return catMatch && textMatch;
+            });
+
+            if (filtered.length === 0) {
+                gridEl.innerHTML = `
+                    <div class="col-span-full py-12 text-center">
+                        <i class="fa-regular fa-folder-open text-slate-300 text-5xl mb-3"></i>
+                        <p class="text-slate-500 font-medium">Berkas yang Anda cari tidak ditemukan.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Build dynamic UI
+            filtered.forEach(doc => {
+                // Color schemes per category
+                let cardColor = "border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/20";
+                let iconColor = "bg-emerald-50 text-emerald-600";
+                let badgeColor = "bg-emerald-50 text-emerald-700";
+
+                if (doc.category === 'Administrasi') {
+                    cardColor = "border-slate-200 hover:border-blue-400 hover:bg-blue-50/20";
+                    iconColor = "bg-blue-50 text-blue-600";
+                    badgeColor = "bg-blue-50 text-blue-700";
+                } else if (doc.category === 'Operasional') {
+                    cardColor = "border-slate-200 hover:border-green-400 hover:bg-green-50/20";
+                    iconColor = "bg-green-50 text-green-600";
+                    badgeColor = "bg-green-50 text-green-700";
+                } else if (doc.category === 'Rekrutmen') {
+                    cardColor = "border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/20";
+                    iconColor = "bg-indigo-50 text-indigo-600";
+                    badgeColor = "bg-indigo-50 text-indigo-700";
+                } else if (doc.category === 'Evaluasi') {
+                    cardColor = "border-slate-200 hover:border-amber-400 hover:bg-amber-50/20";
+                    iconColor = "bg-amber-50 text-amber-600";
+                    badgeColor = "bg-amber-50 text-amber-700";
+                }
+
+                const card = document.createElement('div');
+                card.className = `group bg-white rounded-xl p-5 border shadow-sm transition-all duration-200 flex flex-col justify-between relative ${cardColor}`;
+                
+                // Construct the link content
+                let linkTarget = doc.link === "#" ? "onclick=\"alert('Silakan aktifkan mode edit di pojok kanan atas untuk memasang link pada berkas ini.')\" href='javascript:void(0)'" : `href="${doc.link}" target="_blank"`;
+
+                card.innerHTML = `
+                    <div class="relative">
+                        <!-- Top actions if in Edit Mode -->
+                        ${editMode ? `
+                            <div class="absolute top-0 right-0 flex space-x-1.5 z-10">
+                                <button onclick="openEditModal(${doc.id}, event)" class="w-7 h-7 bg-amber-500 hover:bg-amber-600 text-white rounded-full flex items-center justify-center text-xs shadow transition">
+                                    <i class="fa-solid fa-pencil"></i>
+                                </button>
+                                <button onclick="deleteItem(${doc.id}, event)" class="w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-xs shadow transition">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex items-start space-x-3.5">
+                            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 font-medium ${iconColor}">
+                                <i class="fa-solid ${doc.icon || 'fa-file'} text-lg"></i>
+                            </div>
+                            <div>
+                                <span class="inline-block text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full mb-1.5 ${badgeColor}">
+                                    ${doc.category}
+                                </span>
+                                <h4 class="font-display font-semibold text-slate-800 group-hover:text-slate-900 transition leading-snug line-clamp-2">
+                                    ${doc.name}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <span class="text-xs text-slate-400 truncate max-w-[150px]">
+                            ${doc.link === "#" ? 'Link Belum Diatur' : doc.link.replace('https://', '')}
+                        </span>
+                        <a ${linkTarget} class="text-xs font-bold text-slate-700 group-hover:text-emerald-600 transition flex items-center gap-1.5 bg-slate-100 group-hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg">
+                            <span>Buka</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                        </a>
+                    </div>
+                `;
+                gridEl.appendChild(card);
+            });
+        }
+
+        // Live Filter Tabs
+        function filterCategory(category) {
+            selectedCategory = category;
+            
+            // Switch Active styles on Tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                if (tab.getAttribute('data-category') === category) {
+                    tab.className = "category-tab active px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium transition whitespace-nowrap shadow-sm";
+                } else {
+                    tab.className = "category-tab px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium border border-slate-200 transition whitespace-nowrap";
+                }
+            });
+            renderDashboard();
+        }
+
+        // Search Box filtering
+        function filterDocs() {
+            renderDashboard();
+        }
+
+        // Mode Edit Toggle Function
+        function toggleEditMode() {
+            editMode = !editMode;
+            const btn = document.getElementById('btn-edit-mode');
+            const icon = document.getElementById('edit-mode-icon');
+            const text = document.getElementById('edit-mode-text');
+            const addContainer = document.getElementById('add-item-container');
+            const exportBtn = document.getElementById('btn-export');
+
+            if (editMode) {
+                btn.className = "bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-sm";
+                icon.className = "fa-solid fa-lock-open";
+                text.innerText = "Kunci Mode Edit";
+                addContainer.classList.remove('hidden');
+                exportBtn.classList.remove('hidden');
+            } else {
+                btn.className = "bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-sm";
+                icon.className = "fa-solid fa-pen-to-square";
+                text.innerText = "Aktifkan Mode Edit";
+                addContainer.classList.add('hidden');
+                exportBtn.classList.add('hidden');
+            }
+            renderDashboard();
+        }
+
+        // MODAL MANAGEMENT
+        function openAddModal() {
+            document.getElementById('modal-title').innerText = "Tambah Berkas Baru";
+            document.getElementById('form-item-id').value = "";
+            document.getElementById('form-item-name').value = "";
+            document.getElementById('form-item-category').value = "Administrasi";
+            document.getElementById('form-item-icon').value = "fa-file";
+            document.getElementById('form-item-link').value = "";
+            document.getElementById('icon-preview').innerHTML = `<i class="fa-solid fa-file"></i>`;
+            
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function openEditModal(id, event) {
+            event.stopPropagation();
+            const doc = docs.find(d => d.id === id);
+            if (!doc) return;
+
+            document.getElementById('modal-title').innerText = "Edit Detail Berkas";
+            document.getElementById('form-item-id').value = doc.id;
+            document.getElementById('form-item-name').value = doc.name;
+            document.getElementById('form-item-category').value = doc.category;
+            document.getElementById('form-item-icon').value = doc.icon || "fa-file";
+            document.getElementById('form-item-link').value = doc.link === '#' ? '' : doc.link;
+            document.getElementById('icon-preview').innerHTML = `<i class="fa-solid ${doc.icon || 'fa-file'}"></i>`;
+
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+        }
+
+        // SAVE LOGIC (BOTH ADD AND EDIT)
+        function saveItem(event) {
+            event.preventDefault();
+            const id = document.getElementById('form-item-id').value;
+            const name = document.getElementById('form-item-name').value;
+            const category = document.getElementById('form-item-category').value;
+            const icon = document.getElementById('form-item-icon').value;
+            let link = document.getElementById('form-item-link').value;
+
+            if (!link) link = "#";
+
+            if (id) {
+                // Edit existing doc
+                docs = docs.map(d => d.id === parseInt(id) ? { ...d, name, category, icon, link } : d);
+            } else {
+                // Add new doc
+                const newId = docs.length > 0 ? Math.max(...docs.map(d => d.id)) + 1 : 1;
+                docs.push({ id: newId, name, category, icon, link });
+            }
+
+            localStorage.setItem('hrd_docs', JSON.stringify(docs));
+            closeModal();
+            renderDashboard();
+            updateTabCounts();
+        }
+
+        // DELETE LOGIC
+        function deleteItem(id, event) {
+            event.stopPropagation();
+            if (confirm('Apakah Anda yakin ingin menghapus berkas pintasan ini?')) {
+                docs = docs.filter(d => d.id !== id);
+                localStorage.setItem('hrd_docs', JSON.stringify(docs));
+                renderDashboard();
+                updateTabCounts();
+            }
+        }
+
+        // DYNAMIC EXPORT (Downloads the code incorporating the updated links permanently!)
+        function exportDashboard() {
+            // Get original source code
+            let sourceCode = document.documentElement.outerHTML;
+            
+            // Inject the modified docs array directly inside the script
+            const regex = /const defaultDocs = \[\s*[\s\S]*?\s*\];/;
+            const newDocsString = `const defaultDocs = ${JSON.stringify(docs, null, 12)};`;
+            sourceCode = sourceCode.replace(regex, newDocsString);
+
+            // Create download trigger
+            const blob = new Blob([sourceCode], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dashboard_hrd_interaktif.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Sukses! File dashboard baru dengan data ter-update berhasil diunduh. Anda bisa menggunakan file baru ini sebagai portal utama Anda.');
+        }
+    </script>
+</body>
+</html>
